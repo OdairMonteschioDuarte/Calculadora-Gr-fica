@@ -3,13 +3,13 @@
 # Compilador
 CXX = g++
 
-# Flags de inclusão (Onde estão os .h)
+# Flags de inclusão
 INCLUDES = -I imgui -I imgui/backends -I dependencias/glfw-3.4/include
 
-# Flags de biblioteca (Onde estão os .a e quais bibliotecas do sistema usar)
+# Flags de biblioteca
 LIBS = -L dependencias/glfw-3.4/build/src -lglfw3 -lGL -lX11 -lpthread -ldl
 
-# Arquivos fonte (Seu main + arquivos do ImGui)
+# Arquivos fonte
 SOURCES = main.cpp \
 	  src/calc.cpp \
           imgui/imgui.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp \
@@ -19,10 +19,6 @@ SOURCES = main.cpp \
 # Nome do executável final
 OUTPUT = calculadora
 
-# Regra principal (o que acontece quando digita 'make')
+# Regra principal
 all:
 	$(CXX) $(SOURCES) -o $(OUTPUT) $(INCLUDES) $(LIBS)
-
-# Regra de limpeza (para apagar o executável)
-clean:
-	rm -f $(OUTPUT)
