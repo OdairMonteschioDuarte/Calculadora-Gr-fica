@@ -4,6 +4,6 @@
 #include <vector>
 #include <string>
 
-std::vector<double> calcular(std::string entrada, int tamanho);
+std::vector<double> calcular(std::string entrada, int tamanhoX, int tamanhoY, double intervalo);
 
 #endif

@@ -63,7 +63,7 @@ std::vector<Termo> converter(std::string entrada){
 				menos = 0;
 			}
 		}
-		else if(v == '/' or v == '*' or v == '-' or v == '+' or v == '^' or v == '(' or v == ')'){
+		else if(v == 's' or v == 'c' or v == 't' or v == 'l' or v == 'm' or v == '/' or v == '*' or v == '-' or v == '+' or v == '^' or v == '(' or v == ')'){
 			if(aux != "" and aux[aux.length() - 1] != '.'){
 				if(!expressao.empty() and (expressao.back().tipo == variavel or expressao.back().operacao == ')')){
 					expressao.push_back(Termo('*'));
@@ -104,7 +104,7 @@ std::vector<Termo> converter(std::string entrada){
 						menos++;
 					}
 				}
-				else if(e == '/' or e == '*' or e == '+' or e == '^' or e == '('){
+				else if(e == '/' or e == '*' or e == '+' or e == '^' or e == '(' or e == 's' or e == 'c' or e == 't' or e == 'l' or e == 'm'){
 					throw std::runtime_error("Padrão de sinais invalido");
 				}
 				if(v != '-'){
@@ -272,7 +272,7 @@ std::vector<Termo> RPN(std::vector<Termo>& funcao){
                 }
                 pilha.push(v);
             }
-            else if(v == '^'){
+            else if(v == '^' or v == 's' or v == 'c' or v == 't' or v == 'm' or v == 'l'){
                 if(!pilha.empty() and pilha.top() != '(' and pilha.top() != ')' and pilha.top() != '+' and pilha.top() != '-' and pilha.top() != '*' and pilha.top() != '/'){
                     while(!pilha.empty() and pilha.top() != '('){
                         posfixa.push_back(Termo(pilha.top()));
@@ -303,7 +303,7 @@ std::vector<Termo> RPN(std::vector<Termo>& funcao){
 
 //Usa a expressão posfixada para realizar o calculo da função
 double calculo(std::vector<Termo>& funcao, double x){
-    double resultado, a, b;
+    double resultado, a, b, sen, cos;
     std::stack<double> pilha;
     /*for(int i = 0; i<funcao.size(); i++){
     	if(funcao[i].tipo == numero){
@@ -331,6 +331,8 @@ double calculo(std::vector<Termo>& funcao, double x){
         | 4 | * | 25  |    |
         | 5 |   |     | 25 |
     */
+    const double c0 = 1.0, c1 = 1.0, c2 = -0.5, c3 = -0.1666666667, c4 = 0.0416666667, c5 = 0.0083333333, c6 = -0.0013888889, c7 = -0.0001984127, c8 = 0.0000248016, c9 = 0.0000027557, c10 = -0.0000002756, c11 = -0.0000000251, c12 = 0.0000000021, c13 = 0.0000000002;
+    
     for(int i = 0; i<funcao.size(); i++){
     	if(funcao[i].tipo == numero){
     		pilha.push(funcao[i].valor);
@@ -343,6 +345,9 @@ double calculo(std::vector<Termo>& funcao, double x){
     		pilha.pop();
     		b = pilha.top();
     		pilha.pop();
+    		
+    		double a2 = a*a, ac = a+1.57079632679489661923, ac2 = ac*ac, horner, z, z2, ln, expo;
+    		int exp;
     		switch(funcao[i].operacao){
     			case '-':
     				resultado = b - a;
@@ -357,8 +362,24 @@ double calculo(std::vector<Termo>& funcao, double x){
     				resultado = b / a;
     				break;
     			case '^':
-    				resultado = 1;
-    				if(a>=0){
+    				/*resultado = 1;
+    				if(std::floor(a) != a){
+    					if(x < 0){
+    						resultado = 0;
+    						break;	
+    					}
+    					if(a < 0){
+    						a = -a;
+    						b = 1/b;
+    					}
+    					z = (b-1.0)/(b+1.0), z2 = z*z;
+    					resultado = 1.0 + z2 * (0.3333333333 + z2 * (0.2 + z2 * (0.1428571428 + z2 * 0.1111111111)));
+    					resultado = resultado * z * 2.0;
+    					horner = 1 + (a*resultado) * (1.0 + (a*resultado) * (0.5 + (a*resultado) * (0.16666666666666666 + (a*resultado) * (0.0416666666666666 + (a*resultado) * (0.00833333333333333 + (a*resultado) * (0.00138888888888888 + (a*resultado) *(0.00019841269841269 + (a*resultado) *(0.00002480158730158 + (a*resultado) *0.00000275573192239))))))));
+    					resultado = horner;
+    					
+    				}
+    				else if(a>=0){
     					for(int i = 0; i<a; i++){
     						resultado = resultado*b;
     					}
@@ -368,8 +389,88 @@ double calculo(std::vector<Termo>& funcao, double x){
     						resultado = resultado*b;
     					}
     					resultado = 1/resultado;
+    				}*/
+    				
+    				resultado = 1.0;
+    				if(std::floor(a) == a){
+    					exp = (int)(a);
+    					if(exp < 0){
+    						exp = exp * -1;
+    					}
+    					for(int i = 0; i<exp; i++){
+    						resultado *= b;
+    					}
+    					if(a < 0){
+    						resultado = 1.0/resultado;
+    					}
+    					
+    				}
+    				else{
+    					if(b>0.0){
+    						z = (b-1.0)/(b+1.0);
+    						z2 = z*z;
+    						ln = 2.0 * z * (1.0 + z2 * (0.3333333333 + z2 * (0.2 + z2 * (0.1428571428 + z2 * 0.1111111111))));
+    						expo = a * ln;
+    						bool negativo = (expo < 0);
+    						if(negativo){
+    							expo = -expo;
+    						}
+    						
+    						horner = 1.0 + expo * (1.0 + expo * (0.5 + expo * (0.16666666666666666 + expo * (0.0416666666666666 + expo * (0.00833333333333333 + expo * (0.00138888888888888 + expo * (0.00019841269841269 + expo * (0.00002480158730158 + expo * 0.00000275573192239))))))));
+    						if(negativo){
+    							resultado = 1.0/horner;
+    						}
+    						else{
+    							resultado = horner;
+    						}
+    					}
+    					else{
+    						resultado = 0.0;
+    					}
+    					
     				}
     				break;
+    				
+    			//P(x) = x.(c1+xx.(c3+xx(c5+ ... xx.cu)))
+    		        case 's':
+    				pilha.push(b);
+    				
+    				resultado = a * (c1 + a2 * (c3 + a2 * (c5 + a2 * (c7 + a2 * (c9 + a2 * (c11 + a2 * c13))))));
+    				break;
+    			//P(x) = c0 + x.(c2+xx.(c4+xx(c6+ ... xx.cu)))
+    			case 'c':
+    				pilha.push(b);
+    				
+    				//resultado = c0 + a * (c2 + a2 * (c4 + a2 * (c6 + a2 * (c8 + a2 * (c10 + a2 * c12)))));
+    				resultado = ac * (c1 + ac2 * (c3 + ac2 * (c5 + ac2 * (c7 + ac2 * (c9 + ac2 * (c11 + ac2 * c13))))));
+    				break;
+    			case 't':
+    				pilha.push(b);
+    				sen = a * (c1 + a2 * (c3 + a2 * (c5 + a2 * (c7 + a2 * (c9 + a2 * (c11 + a2 * c13))))));
+    				cos = c0 + a2 * (c2 + a2 * (c4 + a2 * (c6 + a2 * (c8 + a2 * (c10 + a2 * c12)))));
+    				resultado = sen/cos;
+    				break;
+    			case 'm':
+    				pilha.push(b);
+    				
+    				if(a < 0){
+					resultado = a * -1;
+				}
+				else{
+					resultado = a;
+				}
+    				break;
+    			case 'l':
+    				if(x < 0){
+    					resultado = 0;
+    					break;	
+    				}
+    				z = (a-1.0)/(a+1.0), z2 = z*z;
+    				horner = 1.0 + z2 * (0.3333333333 + z2 * (0.2 + z2 * (0.1428571428 + z2 * 0.1111111111)));
+    				pilha.push(b);
+    				resultado = 2.0*z*horner;
+    				break;
+    				
     		}
     		pilha.push(resultado);
     	}
@@ -378,7 +479,7 @@ double calculo(std::vector<Termo>& funcao, double x){
     return pilha.top();
 }
 
-std::vector<double> calcular(std::string entrada, int v){
+std::vector<double> calcular(std::string entrada, int vx, int vy, double intervalo){
     if(entrada == ""){
     	throw std::runtime_error("Entrada vazia");
     }
@@ -386,11 +487,14 @@ std::vector<double> calcular(std::string entrada, int v){
    
     std::vector<Termo> posfixa = RPN(saida);
     
-    std::vector<double> resultado;
+    double escala = vx/intervalo, centroY = vy/2.0;
     
-    for(int i = -v/2; i<v/2; i++){
+    
+    std::vector<double> resultado;
+    for(int i = 0; i<vx; i++){
     	resultado.push_back(i);
-    	resultado.push_back(calculo(posfixa, i));
+    	double pontoY = calculo(posfixa, -intervalo/2 + i*(intervalo/vx));
+    	resultado.push_back(centroY - (int)(pontoY*escala));
     }    
 
     return resultado;

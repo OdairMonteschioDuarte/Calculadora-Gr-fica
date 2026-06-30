@@ -77,7 +77,9 @@ int main(int, char**)
 	static ControleTeclado ctrl = {0};
         static bool foco = false;
         static bool enter = false;
-        const double botaoX = 4*larguraGLFW/100, botaoY = alturaGLFW/42; 
+        const double botaoX = 4*larguraGLFW/100, botaoY = alturaGLFW/42;
+        static double intervalo = 20.0;
+	double escala = vx/intervalo;
         ImVec2 btnSize(botaoX, botaoY);
         ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(187, 187, 187, 255));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(127, 127, 127, 255));
@@ -172,7 +174,7 @@ int main(int, char**)
         [] (ImGuiInputTextCallbackData* data) -> int{
 
         	if(data->EventFlag == ImGuiInputTextFlags_CallbackCharFilter){
-        		const char* permitidos = "0123456789x-+/*^().";
+        		const char* permitidos = "0123456789x-+/*^().sctml";
         	
         		if(data->EventChar < 256 && strchr(permitidos, (char)data->EventChar)){
         			return 0;
@@ -199,7 +201,7 @@ int main(int, char**)
         }, &ctrl);
         				eq[i].nome = termos;
         				if(ImGui::Button("Pronto##2", ImVec2(-1,0))){
-        					eq[i].valores = calcular(eq[i].nome, vx);
+        					eq[i].valores = calcular(eq[i].nome, vx, vy, intervalo);
         					ImGui::CloseCurrentPopup();
         				}
         				ImGui::EndPopup();
@@ -245,7 +247,7 @@ int main(int, char**)
         [] (ImGuiInputTextCallbackData* data) -> int{
 
         	if(data->EventFlag == ImGuiInputTextFlags_CallbackCharFilter){
-        		const char* permitidos = "0123456789x-+/*^().";
+        		const char* permitidos = "0123456789x-+/*^().sctml";
         	
         		if(data->EventChar < 256 && strchr(permitidos, (char)data->EventChar)){
         			return 0;
@@ -309,12 +311,13 @@ int main(int, char**)
         ImVec2 p = ImGui::GetCursorScreenPos();
         std::string entrada1 = equacao;
         static std::string entrada2;
+        
         static std::vector<double> coordenadas;
         if(entrada1 != entrada2 and reescrita == true){
         	try{
         		if(ImGui::IsKeyPressed(ImGuiKey_Enter) or enter == true){ //teste
         			enter = false;
-				coordenadas = calcular(entrada1, vx);
+				coordenadas = calcular(entrada1, vx, vy, intervalo);
 				msg = "";
 				eq.push_back({entrada1, coordenadas, ImGui::GetColorU32(cor)}); //teste
 			} //teste
@@ -329,19 +332,41 @@ int main(int, char**)
         	else{
         		std::cout<<msg<<std::endl;
         		try{
-        			coordenadas = calcular(entrada2, vx);
+        			coordenadas = calcular(entrada2, vx, vy, intervalo);
         		}
         		catch(std::exception& e){}
         	}
         	
         }
+        //Gerar a grade
+        /*lista->AddLine(ImVec2(p.x, vy/2), ImVec2(p.x + vx, vy/2), IM_COL32(0, 0, 0, 255), 3.0f);
+        lista->AddLine(ImVec2(p.x + vx/2, p.y), ImVec2(p.x + vx/2, vy - p.y), IM_COL32(0, 0, 0, 255), 3.0f);
+        for(int i = 0; i<20; i++){
+        	lista->AddLine(ImVec2(p.x + i*vx/20, vy/128 + vy/2), ImVec2(p.x + i*vx/20, vy/2 - vy/128), IM_COL32(0, 0, 0, 255), 1.0f);
+        	
+        	lista->AddLine(ImVec2(vx/256 + vx/2 + p.x, i*vy/20), ImVec2(vx/2 - vx/256 + p.x, i*vy/20), IM_COL32(0, 0, 0, 255), 1.0f);
+        }
+        */
+        
+        lista->AddLine(ImVec2(p.x, vy/2.0f), ImVec2(p.x + vx, vy/2.0f), IM_COL32(0, 0, 0, 255), 2.0f);
+	lista->AddLine(ImVec2(p.x + vx/2.0f, p.y), ImVec2(p.x + vx/2.0f, p.y + vy), IM_COL32(0, 0, 0, 255), 2.0f);
+	for(int i = -10; i<=10; i++){
+		lista->AddLine(ImVec2(p.x + (i+10)*vx/20, vy/2.0f - 5.0f), ImVec2(p.x + (i+10)*vx/20, vy/2.0f + 5.0f), IM_COL32(0,0,0,255), 1.0f);
+		if(p.y + vy/2.0f - (i*vx/20) >= p.y and p.y + vy/2.0f - (i*vx/20) <= p.y + vy){
+			lista->AddLine(ImVec2(p.x + vx/2.0f - 5.0f, vy/2.0f - (i*vx/20)), ImVec2(p.x + vx/2.0f + 5.0f, vy/2.0f - (i*vx/20)), IM_COL32(0, 0, 0, 255), 1.0f);
+		}
+	}
+        
+        
         enter = false; //teste
         if(!eq.empty()){ //teste
         for(int j = 0; j<eq.size(); j++){ //teste
         for(int i = 2; i<coordenadas.size(); i+=2){
-        	//lista->AddLine(ImVec2(p.x + coordenadas[i-2] + vx/2, p.y - coordenadas[i-1] + vy/2), ImVec2(p.x + coordenadas[i] + vx/2, p.y - coordenadas[i+1] + vy/2), ImGui::GetColorU32(cor), 3.0f);
-        	lista->AddLine(ImVec2(p.x + eq[j].valores[i-2] + vx/2, p.y - eq[j].valores[i-1] + vy/2), ImVec2(p.x + eq[j].valores[i] + vx/2, p.y - eq[j].valores[i+1] + vy/2), eq[j].corReta, 3.0f);
-
+        	//compara a altura dos pontos para verificar se ouve uma assintota, assim não a desenhando
+		if(!(((eq[j].valores[i-1] - eq[j].valores[i+1] > 0) ? eq[j].valores[i-1] - eq[j].valores[i+1] : -(eq[j].valores[i-1] - eq[j].valores[i+1])) > vy)){
+        		lista->AddLine(ImVec2(p.x + eq[j].valores[i-2], eq[j].valores[i-1]), ImVec2(p.x + eq[j].valores[i], eq[j].valores[i+1]), eq[j].corReta, 3.0f);
+        		//lista->AddLine(ImVec2(p.x + coordenadas[i-2] + vx/2, p.y - coordenadas[i-1] + vy/2), ImVec2(p.x + coordenadas[i] + vx/2, p.y - coordenadas[i+1] + vy/2), ImGui::GetColorU32(cor), 3.0f);
+        	}
         }
         }} //teste
         ImGui::End();
