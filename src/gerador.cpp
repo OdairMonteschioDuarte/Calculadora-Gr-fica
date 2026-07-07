@@ -174,24 +174,26 @@ void gerarRemez(int grau, double iInicio, double iFim) {
     std::vector<double> coefCos(resultadoCos.begin(), resultadoCos.end() - 1);
     double erroCos = resultadoCos.back();
     
-    std::cout << "Erro máximo estimado Seno: " << (erroSen > 0 ? erroSen : -erroSen) << "\n\n";
-    std::cout << "Erro máximo estimado Cosseno: " << (erroCos > 0 ? erroCos : -erroCos) << "\n\n";
-    
-    std::cout << std::fixed << std::setprecision(10);
-    for (size_t i = 0; i < coefSen.size(); i++) {
-        //Ignoraa coeficientes muito próximos de zero (termos pares no Seno)
-        if (std::abs(coefSen[i]) > 1e-10) {
-            std::cout << "seno" << i << " = " << coefSen[i] << ";\n";
+    std::cout << "{";
+    for (int i = 0; i < grau; i++) {
+	if(i != grau - 1){
+            if(i % 2 != 0){
+        	std::cout << coefSen[i] << " , ";
+            }
+            else{
+    		std::cout << coefCos[i] << " , ";
+            }
+        }
+        else{
+            if(i % 2 != 0){
+        	std::cout << coefSen[i] << "}";
+            }
+            else{
+    		std::cout << coefCos[i] << "}";
+            }
         }
     }
-    std::cout << std::endl;
-    std::cout << std::fixed << std::setprecision(10);
-    for (size_t i = 0; i < coefCos.size(); i++) {
-        //Ignora coeficientes muito próximos de zero (termos impares no Cosseno)
-        if (std::abs(coefCos[i]) > 1e-10) {
-            std::cout << "cosseno" << i << " = " << coefCos[i] << ";\n";
-        }
-    }
+
 }
 
 int main() {
